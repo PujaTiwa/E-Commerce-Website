@@ -1,17 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+const express = require('express');
+const cors = require('cors');
+require('./db/config')
+const User = require('./db/User');
+const app = express();
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+app.use(express.json());
+app.use(cors());
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+app.post('/register', async(req, res)=>{
+    let user = new User(req.body);
+    let result = await user.save();
+    result = result.toObject();
+    delete result.password;
+    res.send(result);
+});
+
+app.post("/login", async (req, res)=> {
+    if(req.body.email && req.body.password) {
+        let user = await User.findOne(req.body).select("-password");
+        if(user) {
+            res.send(user);
+        } else {
+            res.send("result no user found")
+        } 
+    } else {
+        res.send({result: "no user found"})
+    } 
+})
+
+app.listen(5000);
